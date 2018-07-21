@@ -1,0 +1,16 @@
+{
+  "name": "BikeProject",
+  "version": "1.0.0",
+  "description": "Backend for the bike project",
+  "main": "index.js",
+  "author": "Scott Hofman",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3"
+  }
+}
