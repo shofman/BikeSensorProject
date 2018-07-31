@@ -7,8 +7,18 @@ import {
 } from 'react-native';
 import SpeedExample from './SpeedExample';
 import { SERVER_URL } from './constants'
+import fetchWithTimeout from './fetchWithTimeout'
 
-let subscription
+const subscriptions = []
+
+const styles = {
+  rpmContainer: {
+    marginBottom: 20,
+  },
+  text: {
+    fontSize: 40,
+  }
+}
 
 export default class BikeStartPage extends Component {
   constructor(props) {
@@ -18,26 +28,20 @@ export default class BikeStartPage extends Component {
       delay: props.delay,
       tvOn: false,
       realtimeRpm: '0',
-      slowed: false,
     };
-    subscription = DeviceEventEmitter.addListener('speedEvent', this.speedEvent)
-  }
 
-  slowPress = () => {
-    const newValue = !this.state.slowed
-    if (newValue) {
-      SpeedExample.setSlowdown()
-    } else {
-      SpeedExample.cancelSlowdown()
-    }
+    const subscriptionDefinitions = [
+      { name: 'calculatedSpeedEvent', callback: this.calculateSpeedEvent },
+    ]
 
-    this.setState({
-      slowed: newValue,
+    subscriptionDefinitions.map(subscription => {
+      const newSubscription = DeviceEventEmitter.addListener(subscription.name, subscription.callback)
+      subscriptions.push(newSubscription)
     })
   }
 
   backPress = () => {
-    SpeedExample.stopTimer()
+    SpeedExample.stopAndroid()
     this.props.updateState('' + this.state.rpm, '' + this.state.delay, false)
   }
 
@@ -75,10 +79,21 @@ export default class BikeStartPage extends Component {
 
   isTvStillOn = newTvValue => newTvValue === this.state.tvOn
 
+  handleResponse = (response) => {
+    return response.json()
+      .then(json => {
+        if (response.ok) {
+          return json
+        } else {
+          return Promise.reject(json)
+        }
+      })
+  }
+
   sendToServer = async rpm => {
     const queryParams = `?currentRpm=${rpm}&delay=${this.state.delay}&desiredRpm=${this.state.rpm}`
 
-    const result = await fetch(SERVER_URL + queryParams, {
+    const result = await fetchWithTimeout(SERVER_URL + queryParams, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -87,18 +102,21 @@ export default class BikeStartPage extends Component {
       body: JSON.stringify({
         rpm,
       }),
-    }).catch(error => {
-      console.log(error)
-      return { json: () => {} }
+    })
+    .then(this.handleResponse)
+    .catch(error => {
+      return { isShowingTV: this.state.tvOn }
     })
 
-    return result.json()
+    return result
   }
 
-  outputBool = value => value ? 'Yes' : 'No'
+  outputBool = value => {
+    return value ? 'Yes' : 'No'
+  }
 
-  speedEvent = async event => {
-    const rpm = parseFloat(event.speed).toFixed(2)
+  calculateSpeedEvent = async event => {
+    const rpm = parseFloat(event.calculatedSpeed).toFixed(2)
     const result = await this.sendToServer(rpm)
 
     this.setState({
@@ -108,18 +126,20 @@ export default class BikeStartPage extends Component {
   }
 
   componentWillUnmount() {
-    subscription.remove()
+    subscriptions.map(subscription => {
+      subscription.remove()
+    })
+    SpeedExample.stopAndroid()
   }
 
   render() {
     return (
       <View>
         <Button title="back" onPress={this.backPress} />
-        <Button title={'Slowed: ' + this.state.slowed} onPress={this.slowPress} />
         <View>
-          <View style={{marginBottom: 20}}>
-            <Text style={{fontSize: 40}}>{this.state.realtimeRpm}</Text>
-            <Text style={{fontSize: 40}}>{'Showing TV: ' + this.outputBool(this.state.tvOn)}</Text>
+          <View style={styles.rpmContainer}>
+            <Text style={styles.text}>{this.state.realtimeRpm}</Text>
+            <Text style={styles.text}>{'Showing TV: ' + this.outputBool(this.state.tvOn)}</Text>
           </View>
           <View>
             <Button title="-" onPress={this.rpmDecrease} />

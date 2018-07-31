@@ -8,9 +8,13 @@ import React, { Component } from 'react';
 import { View } from 'react-native';
 import BikeStartPage from './BikeStartPage'
 import BikeDisplayPage from './BikeDisplayPage'
+import { BACKGROUND_COLOR } from './constants'
 
 const styles = {
-  header: { backgroundColor: '#ededed', height: 60 },
+  header: {
+    backgroundColor: BACKGROUND_COLOR,
+    height: 60
+  },
   container: { flex: 1 },
 }
 

@@ -5,7 +5,7 @@ import java.util.Timer;
 import java.util.Date;
 import java.util.TimerTask;
 
-import android.content.Intent;
+import android.app.Activity;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -15,16 +15,29 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+import com.dsi.ant.plugins.antplus.pcc.AntPlusBikeCadencePcc;
+import com.dsi.ant.plugins.antplus.pcc.AntPlusBikeSpeedDistancePcc;
+import com.dsi.ant.plugins.antplus.pccbase.PccReleaseHandle;
+
 public class SpeedModule extends ReactContextBaseJavaModule {
 
+    AntPlusBikeCadencePcc bcPcc = null;
+    PccReleaseHandle<AntPlusBikeCadencePcc> bcReleaseHandle = null;
+    AntPlusBikeSpeedDistancePcc bsPcc = null;
+    PccReleaseHandle<AntPlusBikeSpeedDistancePcc> bsReleaseHandle = null;
+
+    private Activity mActivity = null;
+    private CadenceHandler mCadenceHandler = null;
+    private SpeedHandler mSpeedHandler = null;
+
     Timer speedTimer;
-    boolean isSlowing = false;
     ReactApplicationContext myContext;
     float currentSpeed = 4.0f;
 
     public SpeedModule(ReactApplicationContext reactContext) {
         super(reactContext);
         myContext = reactContext;
+        mActivity = this.getCurrentActivity();
     }
 
     @Override
@@ -33,59 +46,25 @@ public class SpeedModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setSlowdown() {
-        isSlowing = true;
+    public void startAndroid() {
+        Activity currentActivity = getCurrentActivity();
+        // mCadenceHandler = new CadenceHandler(currentActivity, myContext);
+        // mCadenceHandler.requestAccess();
+        mSpeedHandler = new SpeedHandler(currentActivity, myContext);
+        mSpeedHandler.requestAccess();
+        
     }
 
     @ReactMethod
-    public void cancelSlowdown() {
-        isSlowing = false;
-    }
-
-    @ReactMethod
-    public void setupTimer() {
-        speedTimer = new Timer();
-
-        speedTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (isSlowing) {
-                    currentSpeed -= .5f;
-                    if (currentSpeed <= 4.0f) {
-                        currentSpeed = 4.0f;
-                    }
-                } else {
-                    currentSpeed += .5f;
-                    if (currentSpeed >= 12.0f) {
-                        currentSpeed = 12.0f;
-                    }
-                }
-
-                BigDecimal max = new BigDecimal("70.0");
-                BigDecimal randFromDouble = new BigDecimal(Math.random());
-                BigDecimal actualRandomDec = randFromDouble.divide(max,BigDecimal.ROUND_DOWN);
-                WritableMap params = new WritableNativeMap();
-//                float result = actualRandomDec.floatValue() * 1000
-                params.putDouble("speed", currentSpeed);
-                sendEvent(myContext,"speedEvent", params);
-            }
-        }, new Date(), 500);
-    }
-
-    @ReactMethod
-    public void stopTimer() {
-        if (speedTimer != null) {
-            speedTimer.cancel();
-            speedTimer = null;
+    public void stopAndroid() {
+        if (mCadenceHandler != null) {
+            mCadenceHandler.tearDown();
+        }
+        if (mSpeedHandler != null) {
+            mSpeedHandler.tearDown();
         }
     }
 
-    @ReactMethod
-    public void startAndroid() {
-        ReactApplicationContext context = getReactApplicationContext();
-        Intent intent = new Intent(context, Activity_BikeCadenceSampler.class);
-        context.startActivity(intent);
-    }
 
     private void sendEvent(ReactContext reactContext,
                            String eventName,
