@@ -46,13 +46,15 @@ public class SpeedModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void startAndroid() {
+    public void startAndroid(Boolean useSpeed) {
         Activity currentActivity = getCurrentActivity();
-        // mCadenceHandler = new CadenceHandler(currentActivity, myContext);
-        // mCadenceHandler.requestAccess();
-        mSpeedHandler = new SpeedHandler(currentActivity, myContext);
-        mSpeedHandler.requestAccess();
-        
+        if (useSpeed) {
+            mSpeedHandler = new SpeedHandler(currentActivity, myContext);
+            mSpeedHandler.requestAccess();
+        } else {
+            mCadenceHandler = new CadenceHandler(currentActivity, myContext);
+            mCadenceHandler.requestAccess();
+        }
     }
 
     @ReactMethod
