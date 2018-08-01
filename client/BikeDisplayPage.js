@@ -104,6 +104,7 @@ export default class BikeStartPage extends Component {
 
     const subscriptionDefinitions = [
       { name: 'calculatedSpeedEvent', callback: this.calculateSpeedEvent },
+      { name: 'calculatedCadenceEvent', callback: this.calculateCadenceEvent },
     ]
 
     subscriptionDefinitions.map(subscription => {
@@ -208,6 +209,16 @@ export default class BikeStartPage extends Component {
 
   calculateSpeedEvent = async event => {
     const incomingResult = parseFloat(event.calculatedSpeed).toFixed(2)
+    const result = await this.sendToServer(incomingResult)
+
+    this.setState({
+      realtimeResult: ('' + incomingResult),
+      tvOn: result ? result.isShowingTV : this.state.tvOn,
+    })
+  }
+
+  calculateCadenceEvent = async event => {
+    const incomingResult = parseFloat(event.calculatedCadence).toFixed(2)
     const result = await this.sendToServer(incomingResult)
 
     this.setState({

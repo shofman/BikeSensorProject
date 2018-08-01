@@ -41,8 +41,8 @@ const styles = {
   },
 }
 
-const rpmDefault = '8'
-const bikeSpeedDefault = '40'
+const rpmDefault = '90'
+const bikeSpeedDefault = '16'
 const delayDefault = '1'
 const useSpeedDefault = false
 
