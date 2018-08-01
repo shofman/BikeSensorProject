@@ -115,15 +115,6 @@ export default class BikeStartPage extends Component<{}> {
       loading: false,
       toggleSpeed: props.toggleSpeed, // Toggle between cadence and speed
     };
-
-    const subscriptionDefinitions = [
-      { name: 'loadingFinishedEvent', callback: this.loadingEvent },
-    ]
-
-    subscriptionDefinitions.map(subscription => {
-      const newSubscription = DeviceEventEmitter.addListener(subscription.name, subscription.callback)
-      subscriptions.push(newSubscription)
-    })
   }
 
   onChanged = stateKey => text => {
@@ -138,62 +129,74 @@ export default class BikeStartPage extends Component<{}> {
         alert("please enter numbers only");
       }
     }
-    // console.warn('firign onchange')
     this.setState({ [stateKey]: newText });
   }
 
   clearServer = async () => {
-    await fetchWithTimeout(SERVER_URL + '/clear', {
+    return await fetchWithTimeout(SERVER_URL + '/clear', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
     })
-    .catch(error => console.log(error))
+    .then(() => true)
+    .catch(error => {
+      console.log(error)
+      return false
+    })
   }
 
-  resetState = () => {
-    SpeedExample.stopAndroid()
-    // console.warn('we are reseting state')
-    this.setState({
-      loading: false,
-    })
-    clearTimeout(loadingTimer)
-  }
+  loadingEvent = event => {
+    if (loadingTimer) {
+      clearTimeout(loadingTimer)
+    }
 
-  loadingEvent = () => {
-    // console.warn('we are calling loading')
-    this.setState({
-      loading: false,
-    })
-    clearTimeout(loadingTimer)
-    this.props.updateState(
-      this.state.rpm,
-      this.state.bikeSpeed,
-      this.state.delay,
-      true,
-      this.state.toggleSpeed
-    )
+    if (event.finished) {
+      this.props.updateState(
+        this.state.rpm,
+        this.state.bikeSpeed,
+        this.state.delay,
+        true,
+        this.state.toggleSpeed
+      )
+    } else {
+      this.setState({
+        loading: false,
+      })
+      SpeedExample.stopAndroid()
+    }
+
   }
 
   updateSwitch = toggleSpeed => {
-    // console.warn('we are updating switch')
     this.setState({
       toggleSpeed
     })
   }
 
+  cancelLoad = () => {
+    if (loadingTimer) {
+      clearTimeout(loadingTimer)
+    }
+    console.warn('canceled android')
+    SpeedExample.stopAndroid()
+  }
+
   submitPress = async () => {
-    // console.warn('we are submitting the press')
     this.setState({
       loading: true,
     })
-
-    loadingTimer = setTimeout(this.loadingEvent, 3000)
-
-    SpeedExample.startAndroid(this.state.toggleSpeed)
-    await this.clearServer()
+    const result = await this.clearServer()
+    if (result) {
+      loadingTimer = setTimeout(this.cancelLoad, 30000)
+      SpeedExample.startAndroid(this.state.toggleSpeed)
+    } else {
+      SpeedExample.sendToast('Something went wrong with connecting to the server')
+      this.setState({
+        loading: false,
+      })
+    }
   }
 
   underlineSelected = selectedProp => {
@@ -221,7 +224,6 @@ export default class BikeStartPage extends Component<{}> {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    // console.warn('checking component')
     if (this.props.rpm !== prevProps.rpm) {
       this.setState({
         rpm: this.props.rpm,
@@ -245,6 +247,23 @@ export default class BikeStartPage extends Component<{}> {
   }
 
 
+  componentDidMount() {
+    if (loadingTimer) {
+      clearTimeout(loadingTimer)
+    }
+    this.setState({
+      loading: false,
+    })
+    const subscriptionDefinitions = [
+      { name: 'loadingFinishedEvent', callback: this.loadingEvent },
+    ]
+
+    subscriptionDefinitions.map(subscription => {
+      const newSubscription = DeviceEventEmitter.addListener(subscription.name, subscription.callback)
+      subscriptions.push(newSubscription)
+    })
+  }
+
   componentWillUnmount() {
     if (loadingTimer) {
       clearTimeout(loadingTimer)
@@ -252,7 +271,6 @@ export default class BikeStartPage extends Component<{}> {
     subscriptions.map(subscription => {
       subscription.remove()
     })
-    // SpeedExample.stopAndroid()
   }
 
   render() {

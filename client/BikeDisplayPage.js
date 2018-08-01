@@ -11,6 +11,8 @@ import { SERVER_URL, BACKGROUND_COLOR } from './constants'
 import fetchWithTimeout from './fetchWithTimeout'
 
 const subscriptions = []
+let isReceivingResults = false
+let pingTimeout
 
 const styles = {
   container: {
@@ -100,6 +102,7 @@ export default class BikeStartPage extends Component {
       toggleSpeed: props.toggleSpeed,
       tvOn: false,
       realtimeResult: '0.00',
+      connectedToServer: false,
     };
 
     const subscriptionDefinitions = [
@@ -180,6 +183,22 @@ export default class BikeStartPage extends Component {
       })
   }
 
+  pingServer = async () => {
+    return await fetchWithTimeout(SERVER_URL, {
+      method: 'GET',
+    })
+    .then(() => {
+      this.setState({
+        connectedToServer: true,
+      })
+    })
+    .catch(error => {
+      this.setState({
+        connectedToServer: false,
+      })
+    })
+  }
+
   sendToServer = async incomingResult => {
     const targetKey = this.getSpeedKey(this.state.toggleSpeed)
     const desired = this.state[targetKey]
@@ -210,24 +229,34 @@ export default class BikeStartPage extends Component {
   calculateSpeedEvent = async event => {
     const incomingResult = parseFloat(event.calculatedSpeed).toFixed(2)
     const result = await this.sendToServer(incomingResult)
-
-    this.setState({
-      realtimeResult: ('' + incomingResult),
-      tvOn: result ? result.isShowingTV : this.state.tvOn,
-    })
+    if (isReceivingResults) {
+      this.setState({
+        realtimeResult: ('' + incomingResult),
+        tvOn: result ? result.isShowingTV : this.state.tvOn,
+      })
+    }
   }
 
   calculateCadenceEvent = async event => {
     const incomingResult = parseFloat(event.calculatedCadence).toFixed(2)
     const result = await this.sendToServer(incomingResult)
+    if (isReceivingResults) {
+      this.setState({
+        realtimeResult: ('' + incomingResult),
+        tvOn: result ? result.isShowingTV : this.state.tvOn,
+      })
+    }
+  }
 
-    this.setState({
-      realtimeResult: ('' + incomingResult),
-      tvOn: result ? result.isShowingTV : this.state.tvOn,
-    })
+  componentDidMount() {
+    isReceivingResults = true
+    this.pingServer()
+    pingTimeout = setInterval(this.pingServer, 5000)
   }
 
   componentWillUnmount() {
+    clearInterval(pingTimeout)
+    isReceivingResults = false
     subscriptions.map(subscription => {
       subscription.remove()
     })
@@ -262,6 +291,7 @@ export default class BikeStartPage extends Component {
         <View style={styles.content}>
           <View style={styles.detailsContainer}>
             <Text style={styles.text}>{'Incoming: ' + this.state.realtimeResult}</Text>
+            <Text style={styles.text}>{'Connected: ' + this.outputBool(this.state.connectedToServer)}</Text>
             <Text style={styles.text}>{'Showing TV: ' + this.outputBool(this.state.tvOn)}</Text>
           </View>
           <View style={styles.setting}>

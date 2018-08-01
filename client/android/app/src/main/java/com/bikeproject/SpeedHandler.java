@@ -44,27 +44,33 @@ public class SpeedHandler {
         // failure to user.
         @Override
         public void onResultReceived(AntPlusBikeSpeedDistancePcc result, RequestAccessResult resultCode, DeviceState initialDeviceState) {
+            WritableMap params = new WritableNativeMap();
             switch (resultCode) {
                 case SUCCESS:
                     bsdPcc = result;
+                    params.putBoolean("finished", true);
                     subscribeToEvents();
                     break;
                 case CHANNEL_NOT_AVAILABLE:
                     sendToast("Channel Not Available", Toast.LENGTH_LONG);
+                    params.putBoolean("finished", false);
                     break;
                 case ADAPTER_NOT_DETECTED:
                     sendToast("ANT Adapter Not Available. Built-in ANT hardware or external adapter required.", Toast.LENGTH_SHORT);
+                    params.putBoolean("finished", false);
                     break;
                 case BAD_PARAMS:
                     sendToast("Bad request parameters.", Toast.LENGTH_SHORT);
+                    params.putBoolean("finished", false);
                     // Note: Since we compose all the params ourself, we should
                     // never see this result
                     break;
                 case OTHER_FAILURE:
                     sendToast("RequestAccess failed. See logcat for details.", Toast.LENGTH_SHORT);
+                    params.putBoolean("finished", false);
                     break;
                 case DEPENDENCY_NOT_INSTALLED:
-                    sendToast("Dependency not installed", Toast.LENGTH_SHORT);
+                    params.putBoolean("finished", false);
                     AlertDialog.Builder adlgBldr = new AlertDialog.Builder(mActivity);
                     adlgBldr.setTitle("Missing Dependency");
                     adlgBldr.setMessage("The required service\n\""
@@ -101,15 +107,19 @@ public class SpeedHandler {
                     waitDialog.show();
                     break;
                 case USER_CANCELLED:
+                    params.putBoolean("finished", false);
                     sendToast("Cancelled. Please try again", Toast.LENGTH_SHORT);
                     break;
                 case UNRECOGNIZED:
+                    params.putBoolean("finished", false);
                     sendToast("Failed: UNRECOGNIZED. PluginLib Upgrade Required?", Toast.LENGTH_SHORT);
                     break;
                 default:
+                    params.putBoolean("finished", false);
                     sendToast("Unrecognized result: " + resultCode, Toast.LENGTH_SHORT);
                     break;
             }
+            sendEvent("loadingFinishedEvent", params);
         }
 
         /**
@@ -284,9 +294,6 @@ public class SpeedHandler {
 
     public void requestAccess() {
         bsdReleaseHandle = AntPlusBikeSpeedDistancePcc.requestAccess(this.mActivity, this.mReactContext, mResultReceiver, mDeviceStateChangeReceiver);
-        WritableMap params = new WritableNativeMap();
-        params.putBoolean("finished", true);
-        sendEvent("loadingFinishedEvent", params);
     }
 
     private void sendEvent(String eventName, WritableMap params) {

@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.widget.Toast;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -65,6 +66,11 @@ public class SpeedModule extends ReactContextBaseJavaModule {
         if (mSpeedHandler != null) {
             mSpeedHandler.tearDown();
         }
+    }
+
+    @ReactMethod
+    public void sendToast(String message) {
+        Toast.makeText(getCurrentActivity().getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
 
