@@ -18,16 +18,20 @@ const setDefaults = () => {
   onTimer = undefined
   offTimer = undefined
 }
+const { spawn, exec } = require( 'child_process' )
+exec( 'tvservice --off', (error, stdout, stderr) => {
+  console.log(`stdout: ${stdout}`);
+  if (stderr) {
+    console.log(`stderr: ${stderr}`);
+  }
+  if (error !== null) {
+      console.log(`exec error: ${error}`);
+  }
+})
 
 setDefaults()
 
 const calculateMovingAverage = newValue => {
-  if (runningAverageRpm === 0) {
-    console.log('we are here')
-    runningAverageRpm = newValue
-    return
-  }
-
   const numberOfValuesToAverage = 5
   let newAverage = runningAverageRpm - (runningAverageRpm / numberOfValuesToAverage)
   newAverage += newValue / numberOfValuesToAverage
@@ -36,9 +40,30 @@ const calculateMovingAverage = newValue => {
 
 const turnOffTv = () => {
   isShowingTV = false
+  exec('echo standby 0 | cec-client -s -d 1',
+    (error, stdout, stderr) => {
+        console.log(`stdout: ${stdout}`);
+        if (stderr) {
+          console.log(`stderr: ${stderr}`);
+        }
+        if (error !== null) {
+            console.log(`exec error: ${error}`);
+        }
+  });
 }
+
 const turnOnTv = () => {
   isShowingTV = true
+  exec('echo on 0 | cec-client -s -d 1',
+    (error, stdout, stderr) => {
+        console.log(`stdout: ${stdout}`);
+        if (stderr) {
+          console.log(`stderr: ${stderr}`);
+        }
+        if (error !== null) {
+            console.log(`exec error: ${error}`);
+        }
+  });
 }
 
 const hasOffTimer = () => offTimer !== undefined
@@ -93,7 +118,7 @@ app.post('/', function(req, res){
     res.json({ isShowingTV });
 });
 
-app.get('/', function(req, res){
+app.get('/', function(req, res) {
     console.log('GET /')
     const html = 'we are working'
     res.writeHead(200, {'Content-Type': 'text/html'});

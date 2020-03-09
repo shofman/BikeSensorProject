@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import SpeedExample from './SpeedExample';
-import { SERVER_URL, BACKGROUND_COLOR } from './constants'
+import { BACKGROUND_COLOR } from './constants'
 import fetchWithTimeout from './fetchWithTimeout'
+import getUrlWithPort from './localUrl'
 
 const subscriptions = []
 let isReceivingResults = false
@@ -100,6 +101,7 @@ export default class BikeStartPage extends Component {
       bikeSpeed: props.bikeSpeed,
       delay: props.delay,
       toggleSpeed: props.toggleSpeed,
+      localUrl: props.localUrl,
       tvOn: false,
       realtimeResult: '0.00',
       connectedToServer: false,
@@ -127,13 +129,13 @@ export default class BikeStartPage extends Component {
 
   backPress = () => {
     SpeedExample.stopAndroid()
-    this.props.updateState(
-      '' + this.state.rpm,
-      '' + this.state.bikeSpeed,
-      '' + this.state.delay,
-      false,
-      this.state.toggleSpeed
-    )
+    this.props.updateState({
+      rpm: '' + this.state.rpm,
+      bikeSpeed: '' + this.state.bikeSpeed,
+      delay: '' + this.state.delay,
+      started: false,
+      toggleSpeed: this.state.toggleSpeed,
+    })
   }
 
   speedIncrease = () => {
@@ -184,7 +186,7 @@ export default class BikeStartPage extends Component {
   }
 
   pingServer = async () => {
-    return await fetchWithTimeout(SERVER_URL, {
+    return await fetchWithTimeout(getUrlWithPort(this.state.localUrl), {
       method: 'GET',
     })
     .then(() => {
@@ -204,7 +206,7 @@ export default class BikeStartPage extends Component {
     const desired = this.state[targetKey]
     const queryParams = `?currentRpm=${incomingResult}&delay=${this.state.delay}&desiredRpm=${desired}`
 
-    const result = await fetchWithTimeout(SERVER_URL + queryParams, {
+    const result = await fetchWithTimeout(getUrlWithPort(this.state.localUrl) + queryParams, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

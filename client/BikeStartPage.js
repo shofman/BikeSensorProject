@@ -9,11 +9,13 @@ import {
   Button,
   Switch,
   TouchableOpacity,
+  ScrollView,
   View
 } from 'react-native';
 import SpeedExample from './SpeedExample';
-import { SERVER_URL, BACKGROUND_COLOR } from './constants'
+import { BACKGROUND_COLOR } from './constants'
 import fetchWithTimeout from './fetchWithTimeout'
+import getUrlWithPort from './localUrl'
 import Loader from './Loader'
 
 const sharedStyles = {
@@ -27,7 +29,7 @@ const sharedStyles = {
   },
   switchOptions: (toggled) => ({
     ...sharedStyles.fontStyle,
-    flex: 2,
+    flex: 1,
     fontWeight: toggled ? '500' : 'normal',
   }),
 }
@@ -57,7 +59,7 @@ const styles = {
     marginRight: 5,
   },
   inputContainer: {
-    flex: 4,
+    flex: 6,
     marginHorizontal: 30,
   },
   switchContainer: {
@@ -65,7 +67,7 @@ const styles = {
     flexDirection: 'row',
     justifyContent: 'center',
     marginVertical: 20,
-    flex: 2,
+    flex: 1,
     borderBottomWidth: 2,
     borderBottomColor: 'lightgrey',
     marginHorizontal: 20,
@@ -77,16 +79,17 @@ const styles = {
   },
   switchOptionsLeft: toggled => ({
     ...sharedStyles.switchOptions(toggled),
-    marginHorizontal: 20,
-    marginRight: 10,
+    paddingLeft: 20,
   }),
   switchOptionsRight: toggled => ({
     ...sharedStyles.switchOptions(toggled),
-    marginLeft: 30,
-    marginRight: -5,
+    textAlign: 'right',
+    paddingRight: 20,
   }),
   switchWrapper: {
-    flex: 2,
+    flex: 1,
+    paddingLeft: 30,
+    alignItems: 'center',
   },
   button: disabled => ({
     alignItems: 'center',
@@ -114,10 +117,12 @@ export default class BikeStartPage extends Component<{}> {
       delay: props.delay,
       loading: false,
       toggleSpeed: props.toggleSpeed, // Toggle between cadence and speed
+      localUrl: props.localUrl,
+      setUrl: props.localUrl,
     };
   }
 
-  onChanged = stateKey => text => {
+  onChangeIntegerInput = stateKey => text => {
     let newText = '';
     const numbers = '0123456789';
 
@@ -132,8 +137,22 @@ export default class BikeStartPage extends Component<{}> {
     this.setState({ [stateKey]: newText });
   }
 
+  onChangeIpAddress = text => {
+    const ipRegex = 
+      /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+
+    if (text.match(ipRegex)) {
+      this.setState({ 
+        localUrl: text,
+        setUrl: text,
+      })
+    } else {
+      this.setState({ setUrl: text })
+    }
+  }
+
   clearServer = async () => {
-    return await fetchWithTimeout(SERVER_URL + '/clear', {
+    return await fetchWithTimeout(getUrlWithPort(this.state.localUrl) + '/clear', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -153,13 +172,13 @@ export default class BikeStartPage extends Component<{}> {
     }
 
     if (event.finished) {
-      this.props.updateState(
-        this.state.rpm,
-        this.state.bikeSpeed,
-        this.state.delay,
-        true,
-        this.state.toggleSpeed
-      )
+      this.props.updateState({
+        rpm: this.state.rpm,
+        bikeSpeed: this.state.bikeSpeed,
+        delay: this.state.delay,
+        started: true,
+        toggleSpeed: this.state.toggleSpeed,
+      })
     } else {
       this.setState({
         loading: false,
@@ -288,7 +307,7 @@ export default class BikeStartPage extends Component<{}> {
           </View>
           <Text style={styles.switchOptionsRight(this.state.toggleSpeed)}>{'Speed'}</Text>
         </View>
-        <View style={styles.inputContainer}>
+        <ScrollView style={styles.inputContainer}>
           <View style={sharedStyles.pageItems}>
             <Text style={styles.labeltext}>{this.rpmText(this.state.toggleSpeed)}</Text>
             <TextInput 
@@ -299,7 +318,7 @@ export default class BikeStartPage extends Component<{}> {
               editable
               underlineColorAndroid='transparent'
               maxLength={3}
-              onChangeText={this.onChanged(this.getSpeedKey(this.state.toggleSpeed))}
+              onChangeText={this.onChangeIntegerInput(this.getSpeedKey(this.state.toggleSpeed))}
               style={styles.textInput}
               value={this.state[this.getSpeedKey(this.state.toggleSpeed)]}
             />
@@ -314,12 +333,27 @@ export default class BikeStartPage extends Component<{}> {
               editable
               underlineColorAndroid='transparent'
               maxLength={2}
-              onChangeText={this.onChanged('delay')}
+              onChangeText={this.onChangeIntegerInput('delay')}
               style={styles.textInput}
               value={this.state.delay}
             />
           </View>
-        </View>
+          <View style={sharedStyles.pageItems}>
+            <Text style={styles.labeltext}>{'Url'}</Text>
+            <TextInput
+              returnKeyType={ "done" }
+              textAlign={'center'}
+              keyboardType='numeric'
+              numberOfLines={1}
+              editable
+              underlineColorAndroid='transparent'
+              maxLength={15}
+              onChangeText={this.onChangeIpAddress}
+              style={styles.textInput}
+              value={this.state.setUrl}
+            />
+          </View>
+        </ScrollView>
         <TouchableOpacity
           activeOpacity={0.5}
           style={styles.button(this.state.loading)}

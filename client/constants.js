@@ -1,6 +1,7 @@
-export const SERVER_URL = 'http://192.168.0.9:3000/'
+export const SERVER_URL = '192.168.0.33'
 export const BACKGROUND_COLOR = '#ededed'
 export const USE_SPEED_KEY = 'SETUP_SPEED_STORAGE_KEY'
 export const RPM_VALUE_KEY = 'RPM_STORAGE_KEY'
 export const BIKE_SPEED_VALUE_KEY = 'BIKE_SPEED_STORAGE_KEY'
 export const DELAY_KEY = 'DELAY_STORAGE_KEY'
+export const URL_KEY = 'URL_SAVE_KEY'

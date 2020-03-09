@@ -24,6 +24,8 @@
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+            <action android:name="com.dsi.ant.plugins.antplus" />  
+            <category android:name="android.intent.category.DEFAULT" />
         </intent-filter>
       </activity>
       <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" />

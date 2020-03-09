@@ -7,6 +7,8 @@ import {
   USE_SPEED_KEY,
   RPM_VALUE_KEY,
   BIKE_SPEED_VALUE_KEY,
+  SERVER_URL,
+  URL_KEY,
   DELAY_KEY
 } from './constants'
 import { retrieveData, storeData } from './storage'
@@ -56,6 +58,7 @@ export default class App extends Component {
       delay: delayDefault,
       started: false,
       toggleSpeed: useSpeedDefault,
+      localUrl: SERVER_URL,
     };
   }
 
@@ -64,34 +67,39 @@ export default class App extends Component {
     const storedBikeSpeed = await retrieveData(BIKE_SPEED_VALUE_KEY, bikeSpeedDefault)
     const storedDelay = await retrieveData(DELAY_KEY, delayDefault)
     const useSpeed = await retrieveData(USE_SPEED_KEY, useSpeedDefault)
+    const localUrl = await retrieveData(URL_KEY, SERVER_URL)
 
     this.setState({
       rpm: storedRpm,
       bikeSpeed: storedBikeSpeed,
       delay: storedDelay,
       toggleSpeed: useSpeed,
+      localUrl,
     })
   }
 
-  updateState = (rpm, bikeSpeed, delay, started, toggleSpeed) => {
-    storeData(RPM_VALUE_KEY, rpm)
-    storeData(BIKE_SPEED_VALUE_KEY, bikeSpeed)
-    storeData(DELAY_KEY, delay)
-    storeData(USE_SPEED_KEY, toggleSpeed)
+  updateState = globalState => {
+    const { rpm, bikeSpeed, delay, started, toggleSpeed, localUrl } = globalState
+    if (rpm) {
+      storeData(RPM_VALUE_KEY, rpm)
+    }
+    if (bikeSpeed) {
+      storeData(BIKE_SPEED_VALUE_KEY, bikeSpeed)
+    }
+    if (delay) {
+      storeData(DELAY_KEY, delay)
+    }
+    if (toggleSpeed) {
+      storeData(USE_SPEED_KEY, toggleSpeed)
+    }
+    if (localUrl) {
+      storeData(URL_KEY, localUrl)
+    }
 
-    this.setState({
-      rpm,
-      bikeSpeed,
-      delay,
-      started,
-      toggleSpeed
-    })
+    this.setState(globalState)
   }
-
-  component
 
   render() {
-    console.log('we are here', this.state)
     return (
       <View style={styles.container}>
         <View style={styles.headerSeperator}>
@@ -106,6 +114,7 @@ export default class App extends Component {
               bikeSpeed={this.state.bikeSpeed}
               delay={this.state.delay}
               toggleSpeed={this.state.toggleSpeed}
+              localUrl={this.state.localUrl}
             />
           :
             <BikeStartPage 
@@ -114,6 +123,7 @@ export default class App extends Component {
               bikeSpeed={this.state.bikeSpeed}
               delay={this.state.delay}
               toggleSpeed={this.state.toggleSpeed}
+              localUrl={this.state.localUrl}
             />
         }
       </View>

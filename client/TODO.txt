@@ -1,0 +1,8 @@
+TODO
+17) test Building an Apk on Klarna phone
+6) Add toggle for hiding advanced options (two below)
+7) Add choosing tire size
+8) test choosing IP address 
+14) Allow installation of ant plugins - test on device
+15) Add link to Readme on homepage
+16) Make scrollview for homepage to avoid keyboard
