@@ -10,7 +10,7 @@ export const retrieveData = async (key, defaultValue) => {
       return value
     }
    } catch (error) {
-     // Error retrieving data
+    console.warn('error', error)
    }
    return defaultValue
 }
@@ -22,6 +22,6 @@ export const storeData = async (key, value) => {
     }
     await AsyncStorage.setItem(key, value);
   } catch (error) {
-    // Error saving data
+    console.warn('error', error)
   }
 }

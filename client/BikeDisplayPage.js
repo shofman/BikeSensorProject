@@ -93,7 +93,7 @@ const styles = {
   })
 }
 
-export default class BikeStartPage extends Component {
+export default class BikeDisplayPage extends Component {
   constructor(props) {
     super(props);
     this.state = {

@@ -178,6 +178,7 @@ export default class BikeStartPage extends Component<{}> {
         delay: this.state.delay,
         started: true,
         toggleSpeed: this.state.toggleSpeed,
+        localUrl: this.state.localUrl,
       })
     } else {
       this.setState({
