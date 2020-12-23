@@ -4,7 +4,10 @@
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
-    "test": "jest"
+    "test": "jest",
+    "build:prod": "if [ ! -d \"android/app/src/main/assets\" ]; then mkdir android/app/src/main/assets; fi && react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "create:release": "cd android && ./gradlew assembleRelease",
+    "install:release": "adb install -r android/app/build/outputs/apk/app-release.apk"
   },
   "dependencies": {
     "react": "16.0.0",
